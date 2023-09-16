@@ -226,50 +226,49 @@ def check_overlap_window(cuff_df, ann_item_df):
 	# None
 	return None
 
-out_dict_format = {
-	"cuffids"		: None,
-	"scaffold"		: None,
-	"cuffstart"		: None,
-	"cuffstop"		: None,
-	"annstart"		: None,
-	"annstop"		: None,
-	"ongene"		: 0,
-	"oncds"			: 0,
-	"onmRNA"		: 0,
-	"onexon"		: 0,
-	"onte"			: 0,
-	"onprotein"		: 0,
-	"onmatch"		: 0,
-	"neargene"		: 0,
-	"nearcds"		: 0,
-	"nearmRNA"		: 0,
-	"nearexon"		: 0,
-	"nearte"		: 0,
-	"nearprotein"	: 0,
-	"nearmatch"		: 0,
-	"numneargenes"	: 0,
-	"IPRnumber"		: None,
-	"IPRtext"		: None,
-	"GOnumber"		: None,
-	"GOtext"		: None
-}
 
 ''' Compute cuff position window overlap in the annotation GFF data'''
 def compute_position_overlap_annotation(cuff_df, gff_df, debug_mode=False):
-	out_row = copy.deepcopy(out_dict_format)
+	out_row = {
+				"cuffids"		: None,
+				"scaffold"		: None,
+				"cuffstart"		: None,
+				"cuffstop"		: None,
+				"annstart"		: None,
+				"annstop"		: None,
+				"ongene"		: 0,
+				"oncds"			: 0,
+				"onmRNA"		: 0,
+				"onexon"		: 0,
+				"onte"			: 0,
+				"onprotein"		: 0,
+				"onmatch"		: 0,
+				"neargene"		: 0,
+				"nearcds"		: 0,
+				"nearmRNA"		: 0,
+				"nearexon"		: 0,
+				"nearte"		: 0,
+				"nearprotein"	: 0,
+				"nearmatch"		: 0,
+				"numneargenes"	: 0,
+				"IPRnumber"		: None,
+				"IPRtext"		: None,
+				"GOnumber"		: None,
+				"GOtext"		: None
+			}
 	out_row["cuffids"] 	 = cuff_df["cuffids"]
 	out_row["scaffold"]  = cuff_df["scaffold"]
 	out_row["cuffstart"] = cuff_df["start"]
 	out_row["cuffstop"]  = cuff_df["stop"]
 	
 	#printf("Processing Transcript - CuffId:{}, ScaffId:{}, Pos({}, {})".format(cuff_df["cuffids"], cuff_df["scaffold"], cuff_df["start"], cuff_df["stop"]))
-	
-	for idx, ann in gff_df.iterrows():
+
+	for idx, ann in gff_df.iterrows():	# TODO - Pandas Dataframe iterrows is very slow and needs to be changed
 		_type = ann["type"]
 		if _type not in ['gene', 'CDS', 'mRNA', 'exon', 
 							'five_prime_UTR', 'three_prime_UTR', 'protein_match', 
 							'expressed_sequence_match', 'match', 'match_part']:
-			continue
+			continue # Skip these types
 
 		# Compare if cuff_window is (1.) ON or (2.) NEAR annotations for the same scaffold
 		pos_scaff, ann_scaff = cuff_df["scaffold"], ann["scaffold"]
@@ -286,6 +285,7 @@ def compute_position_overlap_annotation(cuff_df, gff_df, debug_mode=False):
 				# Keep the IPR/GO information for near gene	
 				ipr_match_str, go_match_str, go_term_str = fetch_ipr_go_info(ann["attributes"])	
 				out_row["IPRnumber"] = ipr_match_str  												# ipr
+				#TODO out_row["IPRtext"] = Read this from entry.list file 
 				out_row["GOnumber"] = go_match_str													# go numb
 				out_row["GOtext"] = go_term_str														# go text
 
