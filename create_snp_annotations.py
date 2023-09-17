@@ -37,7 +37,7 @@ Data:
  - wget http://purl.obolibrary.org/obo/go/go-basic.obo
 
 Usage: 
- - python create_transcript_annotations.py --pos result1_all.txt --ann annot1631_sub.txt --out sub_transcript_annotations_table_1631.out
+ - python create_snp_annotations.py --pos mappos_sub.txt --ann annot1631_sub.txt --out sub_snp_annotations_table_1631.out
  - python create_transcript_annotations.py --help
 '''
 
@@ -48,7 +48,7 @@ Usage:
 Here we are getting SNPs in 1000bp of each start 
 and stop position in the annotation table
 '''
-transcript_window = 10000			# snp position near or on this window range
+snp_window = 10000			# snp position near or on this window range
 sep_merge = '~'
 
 input_ipr_file = "./entry.list" 	# Load IPR reference list to a dataframe
@@ -73,11 +73,11 @@ def printf(log):
 
 ''' Load scaffold position to a dataframe '''
 def load_scafpos(input_position_file):
-	pos_df =  pd.read_csv(input_position_file, sep='\t', skipinitialspace=True)
+	col_names = ["scaffold", "position"]
+	pos_df =  pd.read_csv(input_position_file, sep=':', comment="#", names=col_names, header=None, skipinitialspace=True)
 	pos_df["scaffold"] = pos_df["scaffold"].astype(int)
-	pos_df["start"]    = pos_df["start"].astype(int)
-	pos_df["stop"]     = pos_df["stop"].astype(int)
-	pos_df.sort_values(['cuffids', 'scaffold', 'start', 'stop'], axis=0, ascending=True, inplace=True, na_position="first")
+	pos_df["position"] = pos_df["position"].astype(int)
+	pos_df.sort_values(['scaffold', 'position'], axis=0, ascending=True, inplace=True, na_position="first")
 	return pos_df
 
 ''' Load annotation table and sort the scaffolds and positions '''
@@ -122,19 +122,15 @@ def fetch_ipr_go_info(ann_info):
 
 
 ''' Check if the overlap falls in ON or NEAR category based on position for the same scaffold '''
-def check_overlap_window(cuff_df, ann_item_df):
-	pos_start, pos_end = cuff_df.start, cuff_df.stop
+def check_overlap_position(snp_df, ann_item_df):
+	pos_snp = snp_df.position
 	ann_start, ann_end = ann_item_df.start, ann_item_df.end
-	# ON	: position window overlap on (a.) start, (b.) stop, (c.) both ann, (d.) within ann window
-	if ((pos_start >= ann_start and pos_start <= ann_end) or 	# (a.)
-		(pos_end   >= ann_start and pos_end   <= ann_end) or	# (b.)
-		(pos_start >= ann_start and pos_end   <= ann_end) or	# (c.)
-		(pos_start <= ann_start and pos_end   >= ann_end) 		# (d.)
-		):
+	# ON	: position value overlap on (a.) within ann window
+	if (pos_snp >= ann_start and pos_snp <= ann_end):							# (a.)
 		return "ON"
-	# NEAR	: position window (e.) upstream, (f.) downstream within the acceptable annotation window of transcript_window=10K 
-	elif ((pos_start < ann_start and pos_end < ann_start and abs(pos_end - ann_start) <= transcript_window) or 	# (e.)
-			(pos_start > ann_end and pos_end > ann_end and abs(pos_start - ann_end) <= transcript_window)	     	# (f.)
+	# NEAR	: position (b.) upstream, c.) downstream within the acceptable annotation window=10K 
+	elif ((pos_snp < ann_start and abs(pos_snp - ann_start) <= snp_window) or 	# (b.)
+			(pos_snp > ann_end and abs(pos_snp - ann_end) <= snp_window)	    # (c.)
 		):
 		return "NEAR"
 	# None
@@ -142,12 +138,10 @@ def check_overlap_window(cuff_df, ann_item_df):
 
 
 ''' Compute cuff position window overlap in the annotation GFF data'''
-def compute_position_overlap_annotation(cuff_df, gff_df, debug_mode=False):
+def compute_position_overlap_annotation(snp_df, gff_df, debug_mode=False):
 	out_row = {
-				"cuffids"		: None,
 				"scaffold"		: None,
-				"cuffstart"		: None,
-				"cuffstop"		: None,
+				"position"		: None,
 				"annstart"		: None,
 				"annstop"		: None,
 				"ongene"		: 0,
@@ -170,12 +164,10 @@ def compute_position_overlap_annotation(cuff_df, gff_df, debug_mode=False):
 				"GOnumber"		: None,
 				"GOtext"		: None
 			}
-	out_row["cuffids"] 	 = cuff_df.cuffids
-	out_row["scaffold"]  = cuff_df.scaffold
-	out_row["cuffstart"] = cuff_df.start
-	out_row["cuffstop"]  = cuff_df.stop
+	out_row["scaffold"]  = snp_df.scaffold
+	out_row["position"]  = snp_df.position
 	
-	#printf("Processing Transcript - CuffId:{}, ScaffId:{}, Pos({}, {})".format(cuff_df["cuffids"], cuff_df["scaffold"], cuff_df["start"], cuff_df["stop"]))
+	#printf("Processing Snips -  ScaffId:{}, Pos:{}".format(cuff_df["scaffold"], cuff_df["position"]))
 
 	for ann in gff_df.itertuples():	# Pandas Dataframe iterrows is very slow and needs to be changed
 		idx = ann.Index
@@ -186,10 +178,10 @@ def compute_position_overlap_annotation(cuff_df, gff_df, debug_mode=False):
 			continue # Skip these types
 
 		# Compare if cuff_window is (1.) ON or (2.) NEAR annotations for the same scaffold
-		pos_scaff, ann_scaff = cuff_df.scaffold, ann.scaffold
+		pos_scaff, ann_scaff = snp_df.scaffold, ann.scaffold
 		overlap_state = None
 		if pos_scaff == ann_scaff:
-			overlap_state = check_overlap_window(cuff_df, ann)
+			overlap_state = check_overlap_position(snp_df, ann)
 
 		if overlap_state is not None and overlap_state == "ON":
 			if _type == "gene":
@@ -257,20 +249,20 @@ def compute_position_overlap_annotation(cuff_df, gff_df, debug_mode=False):
 			if out_row["annstop"] is None:  out_row["annstop"]  = str(ann.end) 					# annstop	
 
 		if debug_mode and idx%10000 == 0:
-			printf("\t{} Annotation Item: {}, {}".format(idx, cuff_df.start, cuff_df.stop))
-			printf("\tMatching position window overlap:{}".format(out_row))
+			printf("\t{} Annotation Item: {}".format(idx, snp_df.position))
+			printf("\tMatching position overlap:{}".format(out_row))
 			
 	return out_row
 
 ''' Search annotations for cuff window position '''
-def search_cuffposition_in_annotation(pos_df, gff_df):
+def search_snpposition_in_annotation(pos_df, gff_df):
 	result_list = []
 	# Operate on each cuff/transcript id 
 	with tqdm(total = pos_df.shape[0]) as pbar: 
-		for cuffid in pos_df.itertuples():
-			pbar.set_description("CuffId({}), ScaffId({})".format(cuffid.cuffids, cuffid.scaffold))
+		for snpid in pos_df.itertuples():
+			pbar.set_description("SnpPos({}), ScaffId({})".format(snpid.position, snpid.scaffold))
 			pbar.update(1)
-			out_row_dict = compute_position_overlap_annotation(cuffid, gff_df, debug_mode=False)
+			out_row_dict = compute_position_overlap_annotation(snpid, gff_df, debug_mode=False)
 			result_list.append(pd.DataFrame([out_row_dict]))
 	# Accumulate and Report result on each cuffid
 	result_df = pd.concat(result_list)
@@ -281,9 +273,9 @@ def search_cuffposition_in_annotation(pos_df, gff_df):
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--pos", help="Add transcript scaffold positions file full path", default="result1_all.txt")
+	parser.add_argument("--pos", help="Add transcript scaffold positions file full path", default="mappos_sub.txt")
 	parser.add_argument("--ann", help="Add genome annotations file full path", default="annot1631_sub.txt")
-	parser.add_argument("--out", help="Add transcript annotation output file full path", default="sub_transcript_annotations_table_1631.out")
+	parser.add_argument("--out", help="Add transcript annotation output file full path", default="sub_snp_annotations_table_1631.out")
 	args = parser.parse_args()
 	if args.pos:  input_position_file = args.pos
 	if args.ann:  input_annotations_file = args.ann
@@ -298,7 +290,7 @@ if __name__ == '__main__':
 	printf("Loaded GFF data: \n {}".format(gff_df.head(4)))
 
 	# compute the positions
-	result_df = search_cuffposition_in_annotation(pos_df, gff_df)
+	result_df = search_snpposition_in_annotation(pos_df, gff_df)
 	printf("Result data: \n {}".format(result_df.head()))
 
 	# Wriite results to file

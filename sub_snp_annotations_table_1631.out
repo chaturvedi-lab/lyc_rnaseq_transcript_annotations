@@ -1,0 +1,21 @@
+scaffold	position	annstart	annstop	ongene	oncds	onmRNA	onexon	onte	onprotein	onmatch	neargene	nearcds	nearmRNA	nearexon	nearte	nearprotein	nearmatch	numneargenes	IPRnumber	IPRtext	GOnumber	GOtext
+16	8100			0	0	0	0	0	0	0	0	0	0	0	0	0	0	0				
+168	2600			0	0	0	0	0	0	0	0	0	0	0	0	0	0	0				
+168	2675			0	0	0	0	0	0	0	0	0	0	0	0	0	0	0				
+168	2680			0	0	0	0	0	0	0	0	0	0	0	0	0	0	0				
+1073	343			0	0	0	0	0	0	0	0	0	0	0	0	0	0	0				
+1073	346			0	0	0	0	0	0	0	0	0	0	0	0	0	0	0				
+1073	360			0	0	0	0	0	0	0	0	0	0	0	0	0	0	0				
+1073	394			0	0	0	0	0	0	0	0	0	0	0	0	0	0	0				
+1073	406			0	0	0	0	0	0	0	0	0	0	0	0	0	0	0				
+1073	418			0	0	0	0	0	0	0	0	0	0	0	0	0	0	0				
+1631	2600	51	125	0	0	0	0	0	0	0	0	0	0	0	0	1	1	0				
+1631	2844809	2834588	2835075	0	0	0	0	0	1	1	1	1	1	1	1	0	1	1	IPR000719;IPR011009;IPR017441;IPR028749	Domain-Protein kinase domain;Homologous_superfamily-Protein kinase-like domain superfamily;Binding_site-Protein kinase, ATP binding site	GO:0004672;GO:0004674;GO:0005524;GO:0006468;GO:0035556	"GO:0004672	level-03	depth-05	protein kinase activity [molecular_function];GO:0004674	level-04	depth-06	protein serine/threonine kinase activity [molecular_function];GO:0005524	level-05	depth-08	ATP binding [molecular_function];GO:0006468	level-05	depth-06	protein phosphorylation [biological_process];GO:0035556	level-03	depth-05	intracellular signal transduction [biological_process]"
+1631	6427866	6417376	6417978	0	0	0	0	0	0	1	0	0	0	0	0	1	1	0				
+1631	6907076	6903531	6908762	1	0	1	0	0	1	1	0	1	0	1	1	0	1	0	IPR000608;IPR009060;IPR015940;IPR016135;IPR023313	Domain-Ubiquitin-conjugating enzyme E2;Homologous_superfamily-UBA-like superfamily;Domain-Ubiquitin-associated domain;Homologous_superfamily-Ubiquitin-conjugating enzyme/RWD-like;Active_site-Ubiquitin-conjugating enzyme, active site	GO:0005515	"GO:0005515	level-02	depth-02	protein binding [molecular_function]"
+1631	9952609	9952549	9954095	1	1	1	1	0	1	1	0	0	0	0	1	1	1	0	IPR026150			
+1648	600			0	0	0	0	0	0	0	0	0	0	0	0	0	0	0				
+1648	1000			0	0	0	0	0	0	0	0	0	0	0	0	0	0	0				
+1648	1300			0	0	0	0	0	0	0	0	0	0	0	0	0	0	0				
+1648	1400			0	0	0	0	0	0	0	0	0	0	0	0	0	0	0				
+1648	2600			0	0	0	0	0	0	0	0	0	0	0	0	0	0	0				
